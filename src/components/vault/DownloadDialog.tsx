@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { Download, Monitor, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import winAsset from "../../../public/downloads/nullnote-win32-x64.zip.asset.json";
+import macArmAsset from "../../../public/downloads/nullnote-darwin-arm64.zip.asset.json";
+import macIntelAsset from "../../../public/downloads/nullnote-darwin-x64.zip.asset.json";
+import linuxAsset from "../../../public/downloads/nullnote-linux-x64.tar.gz.asset.json";
 
 type BIP = Event & { prompt: () => Promise<void> };
 let deferred: BIP | null = null;
@@ -10,25 +14,18 @@ if (typeof window !== "undefined") {
 }
 
 const DESKTOP = [
-  { os: "Windows", file: "nullnote-win32-x64.zip" },
-  { os: "macOS (Apple Silicon)", file: "nullnote-darwin-arm64.zip" },
-  { os: "macOS (Intel)", file: "nullnote-darwin-x64.zip" },
-  { os: "Linux", file: "nullnote-linux-x64.tar.gz" },
+  { os: "Windows", file: "nullnote-win32-x64.zip", url: winAsset.url },
+  { os: "macOS (Apple Silicon)", file: "nullnote-darwin-arm64.zip", url: macArmAsset.url },
+  { os: "macOS (Intel)", file: "nullnote-darwin-x64.zip", url: macIntelAsset.url },
+  { os: "Linux", file: "nullnote-linux-x64.tar.gz", url: linuxAsset.url },
 ];
 
 export function DownloadButton() {
   const [open, setOpen] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
-  const [available, setAvailable] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (!open) return;
-    setCanInstall(!!deferred);
-    DESKTOP.forEach((d) =>
-      fetch(`/downloads/${d.file}`, { method: "HEAD" })
-        .then((r) => setAvailable((a) => ({ ...a, [d.file]: r.ok && !r.headers.get("content-type")?.includes("text/html") })))
-        .catch(() => {}),
-    );
+    if (open) setCanInstall(!!deferred);
   }, [open]);
 
   return (
@@ -56,17 +53,11 @@ export function DownloadButton() {
           <section className="space-y-2">
             <h3 className="flex items-center gap-2 text-sm font-medium"><Monitor className="h-4 w-4" />Desktop</h3>
             <div className="grid grid-cols-2 gap-2">
-              {DESKTOP.map((d) =>
-                available[d.file] ? (
-                  <Button key={d.file} variant="outline" asChild><a href={`/downloads/${d.file}`} download>{d.os}</a></Button>
-                ) : (
-                  <Button key={d.file} variant="outline" disabled>{d.os}</Button>
-                ),
-              )}
+              {DESKTOP.map((d) => (
+                <Button key={d.file} variant="outline" asChild><a href={d.url} download={d.file}>{d.os}</a></Button>
+              ))}
             </div>
-            {!DESKTOP.some((d) => available[d.file]) && (
-              <p className="text-xs text-muted-foreground">Desktop downloads appear here once the app is published.</p>
-            )}
+            <p className="text-xs text-muted-foreground">Desktop apps run fully offline. Pair with your browser via Pair device to sync.</p>
           </section>
         </DialogContent>
       </Dialog>
