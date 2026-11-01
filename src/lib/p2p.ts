@@ -13,7 +13,6 @@ export async function connectRoom(doc: Y.Doc, roomId: string, keyB64: string, on
   const room = joinRoom({ appId: "nullnote-v1", password: keyB64 }, roomId, {
     onJoinError: (e) => console.warn("p2p join error", e.error),
   });
-  console.info("p2p joined room", roomId.slice(0, 4));
 
   const send = async (type: number, payload: Uint8Array, target?: string) => {
     const msg = new Uint8Array(payload.length + 1);
