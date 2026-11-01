@@ -13,3 +13,4 @@
 - Local-first, no backend: each folder is a Yjs doc, stored AES-GCM encrypted in IndexedDB with a PBKDF2-derived vault key (src/lib/vault.ts) — zero-knowledge by design.
 - Live sharing syncs folder Yjs docs over WebRTC via trystero/nostr (src/lib/p2p.ts); relays only signal, payloads are encrypted again with the share key carried in the link hash.
 - The app route is ssr:false because everything depends on browser crypto/IndexedDB/WebRTC.
+- Chat messages live in each folder's Yjs doc (Y.Array "chat"), so they persist encrypted and sync over the same P2P link as notes.
