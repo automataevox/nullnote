@@ -3,6 +3,7 @@ import { Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createVault, unlockVault, vaultExists } from "@/lib/vault";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function UnlockScreen({ onUnlock }: { onUnlock: (k: CryptoKey) => void }) {
   const [exists, setExists] = useState<boolean | null>(null);
@@ -35,6 +36,7 @@ export function UnlockScreen({ onUnlock }: { onUnlock: (k: CryptoKey) => void })
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6">
+      <ThemeToggle className="absolute right-4 top-4 z-10" />
       <div className="bg-grid pointer-events-none absolute inset-0" />
       <div className="orb animate-float pointer-events-none absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full" />
       <form onSubmit={submit} className="stagger relative w-full max-w-sm space-y-6 rounded-2xl border bg-background/80 p-8 shadow-lift backdrop-blur">
