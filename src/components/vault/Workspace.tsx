@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { randomBytes, toB64 } from "@/lib/crypto";
 import { connectRoom } from "@/lib/p2p";
 import {
-  autosave, createNote, deleteDoc, folderMeta, loadDoc, loadIndex, notesMap, saveIndex, uid,
+  autosave, createNote, deleteDoc, saveDoc, folderMeta, loadDoc, loadIndex, notesMap, saveIndex, uid,
   type FolderEntry, type SecretType,
 } from "@/lib/vault";
 import { NoteView } from "./NoteView";
