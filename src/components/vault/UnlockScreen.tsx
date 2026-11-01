@@ -34,13 +34,15 @@ export function UnlockScreen({ onUnlock }: { onUnlock: (k: CryptoKey) => void })
   if (exists === null) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-6">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6">
+      <div className="bg-grid pointer-events-none absolute inset-0" />
+      <div className="orb animate-float pointer-events-none absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full" />
+      <form onSubmit={submit} className="stagger relative w-full max-w-sm space-y-6 rounded-2xl border bg-background/80 p-8 shadow-lift backdrop-blur">
         <div className="space-y-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <div className="animate-float flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lift">
             <Lock className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-shimmer text-2xl font-semibold tracking-tight">
             {exists ? "Unlock your vault" : "Create your vault"}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -56,7 +58,7 @@ export function UnlockScreen({ onUnlock }: { onUnlock: (k: CryptoKey) => void })
           )}
           {err && <p className="text-sm text-destructive">{err}</p>}
         </div>
-        <Button type="submit" className="w-full" disabled={busy}>
+        <Button type="submit" variant="hero" className="w-full" disabled={busy}>
           {busy ? "Deriving key…" : exists ? "Unlock" : "Create vault"}
         </Button>
         <p className="flex items-center gap-2 font-mono text-xs text-muted-foreground">

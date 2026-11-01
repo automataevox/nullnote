@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import {
-  ChevronRight, FileText, FolderPlus, KeyRound, Lock, MoreHorizontal, Plus, Share2, Users, CreditCard, Terminal, Code2,
+  ChevronRight, FileText, MessageCircle, FolderPlus, KeyRound, Lock, MoreHorizontal, Plus, Share2, Users, CreditCard, Terminal, Code2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   type FolderEntry, type SecretType,
 } from "@/lib/vault";
 import { NoteView } from "./NoteView";
+import { ChatPanel } from "./ChatPanel";
 import { useY } from "./use-y";
 
 type Folder = { entry: FolderEntry; doc: Y.Doc; peers: number };
@@ -38,6 +39,7 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
   const [folders, setFolders] = useState<Folder[]>([]);
   const [sel, setSel] = useState<Sel>(null);
   const [shareFor, setShareFor] = useState<string | null>(null);
+  const [chatFor, setChatFor] = useState<string | null>(null);
   const cleanups = useRef(new Map<string, (() => void)[]>());
   const indexRef = useRef<FolderEntry[]>([]);
 
@@ -138,7 +140,7 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
       <aside className="flex w-72 shrink-0 flex-col border-r bg-sidebar">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="h-5 w-5 rounded-sm bg-primary" />
+            <div className="animate-spin-slow h-5 w-5 rounded-[5px] bg-primary shadow-glow" />
             <span className="font-semibold tracking-tight">nullnote</span>
           </div>
           <div className="flex">
@@ -146,10 +148,10 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
             <Button variant="ghost" size="icon" aria-label="Lock vault" onClick={onLock}><Lock className="h-4 w-4" /></Button>
           </div>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+        <nav className="stagger flex-1 space-y-1 overflow-y-auto px-2 pb-4">
           {folders.map((f) => (
             <FolderTree key={f.entry.id} folder={f} sel={sel} onSelect={(note) => setSel({ folder: f.entry.id, note })}
-              onNew={(k, t) => newNote(f.entry.id, k, t)} onShare={() => shareFolder(f.entry.id)} onRemove={() => removeFolder(f.entry.id)} />
+              onNew={(k, t) => newNote(f.entry.id, k, t)} onShare={() => shareFolder(f.entry.id)} onRemove={() => removeFolder(f.entry.id)} onChat={() => setChatFor(f.entry.id)} />
           ))}
         </nav>
         <div className="border-t px-4 py-3 font-mono text-[11px] text-muted-foreground">
@@ -157,14 +159,29 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="relative flex-1 overflow-y-auto">
+        {(current ?? folders[0]) && !chatFor && (
+          <Button variant="accent" size="icon" aria-label="Open chat" className="fixed bottom-6 right-6 z-20 h-12 w-12 rounded-full"
+            onClick={() => setChatFor((current ?? folders[0])!.entry.id)}>
+            <MessageCircle className="h-5 w-5" />
+          </Button>
+        )}
         {current ? (
           <NoteView key={sel!.note} doc={current.doc} id={sel!.note}
             onDelete={() => { notesMap(current.doc).delete(sel!.note); setSel(null); }} />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Select or create a note</div>
+          <div className="relative flex h-full flex-col items-center justify-center gap-3 overflow-hidden text-sm text-muted-foreground">
+            <div className="bg-grid pointer-events-none absolute inset-0" />
+            <div className="orb animate-float pointer-events-none absolute h-72 w-72 rounded-full" />
+            <p className="text-shimmer relative text-2xl font-semibold tracking-tight">Your private space.</p>
+            <p className="animate-fade-up relative">Select a note, or press + on a folder to create one.</p>
+          </div>
         )}
       </main>
+      {(() => {
+        const cf = folders.find((f) => f.entry.id === chatFor);
+        return cf ? <ChatPanel key={cf.entry.id} doc={cf.doc} shared={!!cf.entry.shared} peers={cf.peers} onClose={() => setChatFor(null)} /> : null;
+      })()}
 
       <Dialog open={!!shareTarget} onOpenChange={(o) => !o && setShareFor(null)}>
         <DialogContent>
@@ -191,7 +208,7 @@ function ShareLink({ shared, peers }: { shared: { room: string; key: string }; p
         <Button onClick={() => { void navigator.clipboard.writeText(link); toast("Link copied"); }}>Copy</Button>
       </div>
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span className={cn("h-2 w-2 rounded-full", peers ? "bg-highlight" : "bg-border")} />
+        <span className={cn("h-2 w-2 rounded-full", peers ? "bg-highlight animate-pulse-dot" : "bg-border animate-pulse")} />
         {peers ? `${peers} peer${peers > 1 ? "s" : ""} connected` : "Waiting for peers… both devices must have the app open."}
       </p>
     </div>
@@ -202,7 +219,7 @@ const ICON = { note: FileText, password: KeyRound, ssh: Terminal, api: Code2, ca
 
 function FolderTree(p: {
   folder: Folder; sel: Sel; onSelect: (id: string) => void; onNew: (k: "note" | "secret", t?: SecretType) => void;
-  onShare: () => void; onRemove: () => void;
+  onShare: () => void; onRemove: () => void; onChat: () => void;
 }) {
   const { doc, entry, peers } = p.folder;
   const meta = folderMeta(doc);
@@ -252,6 +269,7 @@ function FolderTree(p: {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={p.onShare}><Share2 className="mr-2 h-4 w-4" />{entry.shared ? "Share link" : "Share live…"}</DropdownMenuItem>
+            <DropdownMenuItem onClick={p.onChat}><MessageCircle className="mr-2 h-4 w-4" />Open chat</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setEditing(true)}>Rename</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={p.onRemove}>Remove from device</DropdownMenuItem>
@@ -259,15 +277,15 @@ function FolderTree(p: {
         </DropdownMenu>
       </div>
       {open && (
-        <div className="ml-4 border-l pl-1.5">
+        <div className="animate-fade-up ml-4 border-l pl-1.5">
           {list.length === 0 && <p className="px-2 py-1 text-xs text-muted-foreground">Empty</p>}
           {list.map(([id, n]) => {
             const Icon = ICON[(n.get("kind") === "secret" ? n.get("secretType") : "note") as keyof typeof ICON] ?? FileText;
             const active = p.sel?.note === id;
             return (
               <button key={id} onClick={() => p.onSelect(id)}
-                className={cn("flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-                  active && "bg-sidebar-accent text-foreground")}>
+                className={cn("flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:bg-sidebar-accent hover:text-foreground",
+                  active && "bg-sidebar-accent text-foreground shadow-[inset_2px_0_0_var(--highlight)]")}>
                 <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{(n.get("title") as string) || "Untitled"}</span>
               </button>
