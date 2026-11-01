@@ -53,7 +53,7 @@ function SecretFields({ fields, type }: { fields: Y.Map<string>; type: SecretTyp
   );
 }
 
-function SecretRow(p: { label: string; value: string; secret?: boolean; multiline?: boolean; onChange: (v: string) => void; onGenerate?: () => void }) {
+function SecretRow(p: { label: string; value: string; secret?: boolean | undefined; multiline?: boolean | undefined; onChange: (v: string) => void; onGenerate?: (() => void) | undefined }) {
   const [show, setShow] = useState(!p.secret);
   const copy = async () => {
     await navigator.clipboard.writeText(p.value);

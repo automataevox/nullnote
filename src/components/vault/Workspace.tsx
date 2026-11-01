@@ -55,7 +55,7 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
         const existing = idx.find((e) => e.shared?.room === m[1]);
         if (existing) joinedId = existing.id;
         else {
-          const entry: FolderEntry = { id: uid(), shared: { room: m[1], key: m[2] } };
+          const entry: FolderEntry = { id: uid(), shared: { room: m[1]!, key: m[2]! } };
           idx = [...idx, entry];
           joinedId = entry.id;
           await saveIndex(vaultKey, idx);

@@ -7,7 +7,7 @@ import { Bold, Code, Heading1, Heading2, Italic, List, ListChecks, ListOrdered, 
 import type * as Y from "yjs";
 import { cn } from "@/lib/utils";
 
-export function RichEditor({ doc, field, placeholder }: { doc: Y.Doc; field: string; placeholder?: string }) {
+export function RichEditor({ doc, field, placeholder }: { doc: Y.Doc; field: string; placeholder?: string | undefined }) {
   const editor = useEditor(
     {
       immediatelyRender: false,
