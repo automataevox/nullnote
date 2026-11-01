@@ -10,7 +10,10 @@ import { decryptBytes, encryptBytes, fromB64, importRawKey } from "./crypto";
 export async function connectRoom(doc: Y.Doc, roomId: string, keyB64: string, onPeers: (n: number) => void) {
   const { joinRoom } = await import("trystero/nostr");
   const key = await importRawKey(fromB64(keyB64));
-  const room = joinRoom({ appId: "nullnote-v1", password: keyB64 }, roomId);
+  const room = joinRoom({ appId: "nullnote-v1", password: keyB64 }, roomId, {
+    onJoinError: (e) => console.warn("p2p join error", e.error),
+  });
+  console.info("p2p joined room", roomId.slice(0, 4));
 
   const send = async (type: number, payload: Uint8Array, target?: string) => {
     const msg = new Uint8Array(payload.length + 1);
