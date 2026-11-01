@@ -21,6 +21,7 @@ import { NoteView } from "./NoteView";
 import { ChatPanel } from "./ChatPanel";
 import { ThemeToggle } from "./ThemeToggle";
 import { DownloadButton } from "./DownloadDialog";
+import { PairButton } from "./PairDialog";
 import { useY } from "./use-y";
 
 type Folder = { entry: FolderEntry; doc: Y.Doc; peers: number };
@@ -117,16 +118,39 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
     if (sel?.folder === id) setSel(null);
   };
 
+  const foldersRef = useRef<Folder[]>([]);
+  foldersRef.current = folders;
+
+  const ensureShared = async (id: string) => {
+    const f = foldersRef.current.find((x) => x.entry.id === id)!;
+    if (f.entry.shared) return f.entry.shared;
+    const entry = { ...f.entry, shared: { room: toB64(randomBytes(16)), key: toB64(randomBytes(32)) } };
+    const stop = await connectRoom(f.doc, entry.shared.room, entry.shared.key, (n) => setPeers(id, n));
+    cleanups.current.get(id)?.push(stop);
+    persistIndex(indexRef.current.map((e) => (e.id === id ? entry : e)));
+    foldersRef.current = foldersRef.current.map((x) => (x.entry.id === id ? { ...x, entry } : x));
+    setFolders((fs) => fs.map((x) => (x.entry.id === id ? { ...x, entry } : x)));
+    return entry.shared;
+  };
+
   const shareFolder = async (id: string) => {
-    const f = folders.find((x) => x.entry.id === id)!;
-    if (!f.entry.shared) {
-      const entry = { ...f.entry, shared: { room: toB64(randomBytes(16)), key: toB64(randomBytes(32)) } };
-      const stop = await connectRoom(f.doc, entry.shared.room, entry.shared.key, (n) => setPeers(id, n));
-      cleanups.current.get(id)?.push(stop);
-      persistIndex(indexRef.current.map((e) => (e.id === id ? entry : e)));
-      setFolders((fs) => fs.map((x) => (x.entry.id === id ? { ...x, entry } : x)));
-    }
+    await ensureShared(id);
     setShareFor(id);
+  };
+
+  const shareAll = async () => {
+    const out = [];
+    for (const f of [...foldersRef.current]) out.push(await ensureShared(f.entry.id));
+    return out;
+  };
+
+  const addShares = async (shares: { room: string; key: string }[]) => {
+    const fresh = shares.filter((s) => !indexRef.current.some((e) => e.shared?.room === s.room));
+    const entries = fresh.map((s) => ({ id: uid(), shared: s }));
+    persistIndex([...indexRef.current, ...entries]);
+    const mounted = await Promise.all(entries.map(mount));
+    setFolders((fs) => [...fs, ...mounted]);
+    return fresh.length;
   };
 
   const newNote = (folderId: string, kind: "note" | "secret", t?: SecretType) => {
@@ -146,6 +170,7 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
             <span className="font-semibold tracking-tight">nullnote</span>
           </div>
           <div className="flex">
+            <PairButton shareAll={shareAll} addShares={addShares} />
             <DownloadButton />
             <ThemeToggle />
             <Button variant="ghost" size="icon" aria-label="New folder" onClick={addFolder}><FolderPlus className="h-4 w-4" /></Button>
