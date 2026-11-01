@@ -1,24 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { UnlockScreen } from "@/components/vault/UnlockScreen";
+import { Workspace } from "@/components/vault/Workspace";
+import { Toaster } from "@/components/ui/sonner";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "nullnote — private, encrypted, peer-to-peer notes" },
+      { name: "description", content: "Zero-knowledge notebook and vault. Encrypted on your device, shared live peer-to-peer. No cloud." },
+      { property: "og:title", content: "nullnote — private peer-to-peer notes" },
+      { property: "og:description", content: "Zero-knowledge notebook and vault with live P2P collaboration. No cloud." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: App,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function App() {
+  const [key, setKey] = useState<CryptoKey | null>(null);
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      {key ? <Workspace vaultKey={key} onLock={() => setKey(null)} /> : <UnlockScreen onUnlock={setKey} />}
+      <Toaster />
+    </>
   );
 }
