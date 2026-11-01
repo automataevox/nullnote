@@ -23,6 +23,17 @@ import { useY } from "./use-y";
 type Folder = { entry: FolderEntry; doc: Y.Doc; peers: number };
 type Sel = { folder: string; note: string } | null;
 
+// Capture a "#join=room.key" link once, at app load, and strip it from the address bar.
+let pendingJoin: { room: string; key: string } | null = null;
+if (typeof window !== "undefined") {
+  const m = window.location.hash.match(/^#join=([\w-]+)\.([\w-]+)$/);
+  if (m) {
+    pendingJoin = { room: m[1]!, key: m[2]! };
+    history.replaceState(null, "", window.location.pathname);
+  }
+}
+let loadChain: Promise<void> = Promise.resolve();
+
 export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: () => void }) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [sel, setSel] = useState<Sel>(null);
@@ -43,40 +54,41 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
 
   const persistIndex = (idx: FolderEntry[]) => { indexRef.current = idx; void saveIndex(vaultKey, idx); };
 
-  // Initial load + join-from-link
+  // Initial load + join-from-link (serialized so a double-mounted effect can't race)
   useEffect(() => {
     let alive = true;
-    (async () => {
+    loadChain = loadChain.then(async () => {
+      if (!alive) return;
       let idx = await loadIndex(vaultKey);
-      const m = window.location.hash.match(/^#join=([\w-]+)\.([\w-]+)$/);
-      let joinedId: string | null = null;
-      if (m) {
-        history.replaceState(null, "", window.location.pathname);
-        const existing = idx.find((e) => e.shared?.room === m[1]);
-        if (existing) joinedId = existing.id;
-        else {
-          const entry: FolderEntry = { id: uid(), shared: { room: m[1]!, key: m[2]! } };
-          idx = [...idx, entry];
-          joinedId = entry.id;
+      if (pendingJoin) {
+        const j = pendingJoin;
+        pendingJoin = null;
+        if (!idx.some((e) => e.shared?.room === j.room)) {
+          idx = [...idx, { id: uid(), shared: j }];
           await saveIndex(vaultKey, idx);
           toast("Joined shared folder — syncing with peers…");
         }
       }
       indexRef.current = idx;
       const loaded = await Promise.all(idx.map(mount));
-      if (!alive) return;
       if (loaded.length === 0) {
         const f = await mount({ id: uid() });
-        f.doc.transact(() => folderMeta(f.doc).set("name", "Personal"));
-        const n = createNote(f.doc, "note");
-        notesMap(f.doc).get(n)!.set("title", "Welcome");
+        f.doc.transact(() => {
+          folderMeta(f.doc).set("name", "Personal");
+          const n = createNote(f.doc, "note");
+          notesMap(f.doc).get(n)!.set("title", "Welcome");
+        });
+        await saveDoc(vaultKey, f.entry.id, f.doc);
         persistIndex([f.entry]);
         loaded.push(f);
-        setSel({ folder: f.entry.id, note: n });
+      }
+      if (!alive) {
+        cleanups.current.forEach((fns) => fns.forEach((f) => f()));
+        cleanups.current.clear();
+        return;
       }
       setFolders(loaded);
-      if (joinedId) setShareFor(null);
-    })();
+    });
     return () => {
       alive = false;
       cleanups.current.forEach((fns) => fns.forEach((f) => f()));
