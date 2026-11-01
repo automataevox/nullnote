@@ -14,6 +14,6 @@ echo '{"name":"nullnote","version":"1.0.0","main":"main.cjs"}' > "$STAGE/package
 if [ "${1:-}" = "all" ]; then TARGETS="win32:x64 darwin:x64 darwin:arm64 linux:x64"; else TARGETS="current"; fi
 for t in $TARGETS; do
   if [ "$t" = "current" ]; then ARGS=""; else ARGS="--platform=${t%%:*} --arch=${t##*:}"; fi
-  npx --yes @electron/packager "$STAGE" nullnote $ARGS --out=electron-release --overwrite
+  npx --yes @electron/packager "$STAGE" nullnote $ARGS --electron-version=38.2.0 --out=electron-release --overwrite
 done
 echo "Done. Your app is in electron-release/"
