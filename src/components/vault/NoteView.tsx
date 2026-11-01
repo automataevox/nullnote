@@ -19,7 +19,7 @@ export function NoteView({ doc, id, onDelete }: { doc: Y.Doc; id: string; onDele
   const fields = note.get("fields") as Y.Map<string>;
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10 md:px-14">
+    <div className="animate-fade-up mx-auto max-w-3xl px-8 py-10 md:px-14">
       <div className="mb-2 flex items-center justify-between gap-4">
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
           {kind === "secret" ? `vault · ${secretType}` : "note"}
@@ -43,7 +43,7 @@ export function NoteView({ doc, id, onDelete }: { doc: Y.Doc; id: string; onDele
 function SecretFields({ fields, type }: { fields: Y.Map<string>; type: SecretType }) {
   useY(fields);
   return (
-    <div className="mb-8 divide-y rounded-lg border">
+    <div className="stagger mb-8 divide-y rounded-xl border shadow-sm transition-shadow focus-within:shadow-glow">
       {SECRET_FIELDS[type].map((f) => (
         <SecretRow key={f.key} label={f.label} value={fields.get(f.key) ?? ""} secret={f.secret} multiline={f.multiline}
           onChange={(v) => fields.set(f.key, v)}

@@ -56,7 +56,7 @@ export function autosave(key: CryptoKey, id: string, doc: Y.Doc) {
   const h = (_u: Uint8Array, origin: unknown) => {
     if (origin === "load") return;
     clearTimeout(t);
-    t = setTimeout(() => void saveDoc(key, id, doc), 400);
+    t = setTimeout(() => void saveDoc(key, id, doc), 150);
   };
   doc.on("update", h);
   return () => {
