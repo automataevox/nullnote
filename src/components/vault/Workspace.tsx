@@ -19,6 +19,7 @@ import {
 } from "@/lib/vault";
 import { NoteView } from "./NoteView";
 import { ChatPanel } from "./ChatPanel";
+import { ThemeToggle } from "./ThemeToggle";
 import { useY } from "./use-y";
 
 type Folder = { entry: FolderEntry; doc: Y.Doc; peers: number };
@@ -144,6 +145,7 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
             <span className="font-semibold tracking-tight">nullnote</span>
           </div>
           <div className="flex">
+            <ThemeToggle />
             <Button variant="ghost" size="icon" aria-label="New folder" onClick={addFolder}><FolderPlus className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" aria-label="Lock vault" onClick={onLock}><Lock className="h-4 w-4" /></Button>
           </div>
