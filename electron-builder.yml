@@ -1,0 +1,41 @@
+appId: com.electron.nullnote
+productName: nullnote
+directories:
+  app: electron-release/stage
+  output: electron-release/packages
+files:
+  - main.cjs
+  - preload.cjs
+  - package.json
+  - node_modules/**/*
+  - dist/client/**/*
+asar: true
+publish:
+  provider: github
+  owner: automataevox
+  repo: nullnote
+win:
+  icon: electron/icon.ico
+  artifactName: nullnote-win32-x64.${ext}
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+linux:
+  category: Office
+  artifactName: nullnote-x86_64.AppImage
+  target:
+    - target: AppImage
+      arch:
+        - x64
+mac:
+  artifactName: nullnote-darwin-${arch}.${ext}
+  target:
+    - target: zip
+      arch:
+        - x64
+        - arm64

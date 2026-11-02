@@ -22,6 +22,7 @@ import { ChatPanel } from "./ChatPanel";
 import { ThemeToggle } from "./ThemeToggle";
 import { DownloadButton } from "./DownloadDialog";
 import { PairButton } from "./PairDialog";
+import { UpdateControl } from "./UpdateControl";
 import { useY } from "./use-y";
 
 type Folder = { entry: FolderEntry; doc: Y.Doc; peers: number };
@@ -162,6 +163,16 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
   const current = sel && folders.find((f) => f.entry.id === sel.folder);
   const shareTarget = folders.find((f) => f.entry.id === shareFor);
 
+  const installUpdate = async () => {
+    try {
+      for (const folder of folders) await saveDoc(vaultKey, folder.entry.id, folder.doc);
+      await saveIndex(vaultKey, indexRef.current);
+      await window.nullnoteUpdater?.install();
+    } catch (error) {
+      toast.error(`Update canceled because the vault could not be saved: ${String(error)}`);
+    }
+  };
+
   return (
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
       {navOpen && <button aria-label="Close folder navigation" className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setNavOpen(false)} />}
@@ -188,8 +199,11 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
               onNew={(k, t) => { newNote(f.entry.id, k, t); setNavOpen(false); }} onShare={() => shareFolder(f.entry.id)} onRemove={() => removeFolder(f.entry.id)} onChat={() => { setChatFor(f.entry.id); setNavOpen(false); }} />
           ))}
         </nav>
-        <div className="border-t px-4 py-3 font-mono text-[11px] text-muted-foreground">
-          encrypted · local-first · p2p
+        <div className="space-y-1 border-t px-3 py-2">
+          <UpdateControl onInstall={installUpdate} />
+          <div className="space-y-0.5 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+            <div>build {import.meta.env["VITE_GIT_VERSION"]}</div>
+          </div>
         </div>
       </aside>
 

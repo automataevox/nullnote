@@ -18,22 +18,13 @@ jobs:
         include:
           - name: Windows x64
             os: windows-latest
-            target: win32:x64
-            asset: nullnote-win32-x64.zip
-          - name: macOS Intel
-            os: macos-15-intel
-            target: darwin:x64
-            app_dir: nullnote-darwin-x64
-            asset: nullnote-darwin-x64.zip
-          - name: macOS Apple Silicon
-            os: macos-latest
-            target: darwin:arm64
-            app_dir: nullnote-darwin-arm64
-            asset: nullnote-darwin-arm64.zip
+            target: win
+          - name: macOS x64 and Apple Silicon
+            os: macos-15
+            target: mac
           - name: Linux x64
             os: ubuntu-latest
-            target: linux:x64
-            asset: nullnote-linux-x64.tar.gz
+            target: linux
 
     steps:
       - name: Check out source
@@ -44,6 +35,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
       - name: Build Electron app
         shell: bash
         env:
@@ -52,54 +46,12 @@ jobs:
           export NULLNOTE_VERSION="${NULLNOTE_VERSION#v}"
           bash electron/build.sh "${{ matrix.target }}"
 
-      - name: Archive Windows app
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Compress-Archive -Path electron-release/nullnote-win32-x64 -DestinationPath ${{ matrix.asset }}
-
-      - name: Archive macOS app
-        if: runner.os == 'macOS'
-        shell: bash
-        run: ditto -c -k --sequesterRsrc --keepParent "electron-release/${{ matrix.app_dir }}" "${{ matrix.asset }}"
-
-      - name: Archive Linux app
-        if: runner.os == 'Linux'
-        shell: bash
-        run: tar -czf "${{ matrix.asset }}" -C electron-release nullnote-linux-x64
-
-      - name: Build Linux AppImage
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          mkdir -p AppDir/usr/lib/nullnote AppDir/usr/share/icons/hicolor/512x512/apps
-          cp -a electron-release/nullnote-linux-x64/. AppDir/usr/lib/nullnote/
-          cp public/icons/icon-512.png AppDir/usr/share/icons/hicolor/512x512/apps/nullnote.png
-          cat > AppDir/AppRun <<'EOF'
-          #!/bin/sh
-          HERE="$(dirname "$(readlink -f "$0")")"
-          exec "$HERE/usr/lib/nullnote/nullnote" "$@"
-          EOF
-          cat > AppDir/nullnote.desktop <<'EOF'
-          [Desktop Entry]
-          Type=Application
-          Name=nullnote
-          Exec=nullnote
-          Icon=nullnote
-          Categories=Office;
-          EOF
-          cp AppDir/usr/share/icons/hicolor/512x512/apps/nullnote.png AppDir/nullnote.png
-          chmod +x AppDir/AppRun
-          curl -L --fail -o appimagetool.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x appimagetool.AppImage
-          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir nullnote-x86_64.AppImage
-
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
-          path: |
-            ${{ matrix.asset }}
-            nullnote-x86_64.AppImage
+          path: electron-release/packages/*
+          if-no-files-found: error
 
   release:
     name: Publish GitHub Release

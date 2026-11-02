@@ -1,22 +1,33 @@
 #!/usr/bin/env bash
-# Build the nullnote desktop app on this computer.
-#   ./electron/build.sh            -> app for this computer's system
-#   ./electron/build.sh all        -> Windows, macOS (Intel + Apple Silicon) and Linux
+# Build updater-capable desktop packages.
+#   ./electron/build.sh win        -> Windows NSIS installer
+#   ./electron/build.sh linux     -> Linux AppImage
+#   ./electron/build.sh mac       -> macOS x64 and arm64 ZIPs (manual updates)
 set -euo pipefail
 cd "$(dirname "$0")/.."
-npm install
+TARGET="${1:-linux}"
+VERSION="${NULLNOTE_VERSION:-0.0.0-dev}"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+  echo "Invalid NULLNOTE_VERSION: $VERSION" >&2
+  exit 1
+fi
+bun install --frozen-lockfile
+export NULLNOTE_VERSION="$VERSION"
 npx vite build --config electron/vite.config.ts
 STAGE=electron-release/stage
 rm -rf "$STAGE" && mkdir -p "$STAGE"
 cp electron/main.cjs "$STAGE/"
+cp electron/preload.cjs "$STAGE/"
 cp electron/icon.ico "$STAGE/icon.ico"
 mkdir -p "$STAGE/dist"
 cp -r electron-release/client "$STAGE/dist/client"
-echo '{"name":"nullnote","version":"1.0.1","main":"main.cjs"}' > "$STAGE/package.json"
-if [ "${1:-}" = "all" ]; then TARGETS="win32:x64 darwin:x64 darwin:arm64 linux:x64"; else TARGETS="current"; fi
-for t in $TARGETS; do
-  if [ "$t" = "current" ]; then ARGS=""; else ARGS="--platform=${t%%:*} --arch=${t##*:}"; fi
-  case "$t" in win32*|current*) ARGS="$ARGS --icon=icon.ico";; esac
-  npx --yes @electron/packager "$STAGE" nullnote $ARGS --electron-version=38.2.0 --out=electron-release --overwrite
-done
-echo "Done. Your app is in electron-release/"
+printf '{"name":"nullnote","version":"%s","main":"main.cjs","dependencies":{"electron-updater":"%s"}}\n' \
+  "$VERSION" "$(node -p 'require("./package.json").dependencies["electron-updater"]')" > "$STAGE/package.json"
+npm install --prefix "$STAGE" --omit=dev --no-audit --no-fund
+case "$TARGET" in
+  win) npx electron-builder --config electron-builder.yml --win nsis --x64 --publish never ;;
+  linux) npx electron-builder --config electron-builder.yml --linux AppImage --x64 --publish never ;;
+  mac) npx electron-builder --config electron-builder.yml --mac zip --x64 --arm64 --publish never ;;
+  *) echo "Unknown desktop target: $TARGET" >&2; exit 1 ;;
+esac
+echo "Done. Desktop packages and update metadata are in electron-release/packages/"

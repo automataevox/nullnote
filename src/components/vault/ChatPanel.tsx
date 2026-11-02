@@ -36,7 +36,9 @@ export function ChatPanel({ doc, shared, peers, onClose }: { doc: Y.Doc; shared:
   const end = useRef<HTMLDivElement>(null);
   const list = msgs.toArray().filter((m): m is ChatMsg => !!m && typeof m === "object" && typeof (m as ChatMsg).text === "string");
 
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth" }), [list.length]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [list.length]);
 
   const send = (e: React.FormEvent) => {
     e.preventDefault();
