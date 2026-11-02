@@ -8,14 +8,21 @@ import { useY } from "./use-y";
 
 export type ChatMsg = { id: string; from: string; name: string; text: string; at: number };
 
+const uid = () => {
+  try { if (typeof crypto.randomUUID === "function") return crypto.randomUUID(); } catch { /* insecure context */ }
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+};
+
 const MY_ID_KEY = "nullnote:me";
 function me() {
-  let v = localStorage.getItem(MY_ID_KEY);
-  if (!v) {
-    v = JSON.stringify({ id: crypto.randomUUID(), name: "" });
-    localStorage.setItem(MY_ID_KEY, v);
-  }
-  return JSON.parse(v) as { id: string; name: string };
+  try {
+    const p = JSON.parse(localStorage.getItem(MY_ID_KEY) || "null");
+    if (p && typeof p.id === "string") return { id: p.id, name: typeof p.name === "string" ? p.name : "" };
+  } catch { /* corrupt or blocked storage */ }
+  const v = { id: uid(), name: "" };
+  try { localStorage.setItem(MY_ID_KEY, JSON.stringify(v)); } catch { /* storage blocked */ }
+  return v;
 }
 
 export const chatArray = (doc: Y.Doc) => doc.getArray<ChatMsg>("chat");
@@ -27,7 +34,7 @@ export function ChatPanel({ doc, shared, peers, onClose }: { doc: Y.Doc; shared:
   const [self, setSelf] = useState(me);
   const [text, setText] = useState("");
   const end = useRef<HTMLDivElement>(null);
-  const list = msgs.toArray();
+  const list = msgs.toArray().filter((m): m is ChatMsg => !!m && typeof m === "object" && typeof (m as ChatMsg).text === "string");
 
   useEffect(() => end.current?.scrollIntoView({ behavior: "smooth" }), [list.length]);
 
@@ -35,13 +42,17 @@ export function ChatPanel({ doc, shared, peers, onClose }: { doc: Y.Doc; shared:
     e.preventDefault();
     const t = text.trim();
     if (!t) return;
-    msgs.push([{ id: crypto.randomUUID(), from: self.id, name: self.name || "Anonymous", text: t, at: Date.now() }]);
-    setText("");
+    try {
+      msgs.push([{ id: uid(), from: self.id, name: self.name || "Anonymous", text: t, at: Date.now() }]);
+      setText("");
+    } catch (err) {
+      console.error("chat send failed", err);
+    }
   };
 
   const setName = (name: string) => {
     const v = { ...self, name };
-    localStorage.setItem(MY_ID_KEY, JSON.stringify(v));
+    try { localStorage.setItem(MY_ID_KEY, JSON.stringify(v)); } catch { /* storage blocked */ }
     setSelf(v);
   };
 
@@ -69,10 +80,10 @@ export function ChatPanel({ doc, shared, peers, onClose }: { doc: Y.Doc; shared:
           const mine = m.from === self.id;
           const grouped = i > 0 && list[i - 1]!.from === m.from && m.at - list[i - 1]!.at < 120000;
           return (
-            <div key={m.id} className={cn("animate-pop-in flex flex-col", mine ? "items-end" : "items-start", grouped && "-mt-2")}>
+            <div key={m.id ?? i} className={cn("animate-pop-in flex flex-col", mine ? "items-end" : "items-start", grouped && "-mt-2")}>
               {!grouped && (
                 <span className="mb-1 font-mono text-[10px] text-muted-foreground">
-                  {mine ? "you" : m.name} · {new Date(m.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {mine ? "you" : m.name || "Anonymous"} · {new Date(Number(m.at) || 0).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
               <div className={cn("max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm",
@@ -90,7 +101,7 @@ export function ChatPanel({ doc, shared, peers, onClose }: { doc: Y.Doc; shared:
           className="mb-2 w-full bg-transparent font-mono text-[11px] text-muted-foreground outline-none" />
         <form onSubmit={send} className="flex items-end gap-2 rounded-xl border bg-muted p-1.5 transition-shadow focus-within:shadow-glow">
           <textarea value={text} onChange={(e) => setText(e.target.value)} rows={1} placeholder="Message…"
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) send(e); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) send(e); }}
             className="max-h-32 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none" />
           <Button type="submit" size="icon" variant="accent" aria-label="Send" disabled={!text.trim()} className="h-8 w-8 rounded-lg">
             <ArrowUp className="h-4 w-4" />
