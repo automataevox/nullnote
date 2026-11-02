@@ -7,9 +7,9 @@ const NET = {
   relayConfig: {
     urls: [
       "wss://relay.damus.io", "wss://nos.lol", "wss://relay.primal.net",
-      "wss://relay.nostr.band", "wss://nostr.mom", "wss://relay.snort.social",
+      "wss://nostr.mom", "wss://relay.snort.social",
     ],
-    redundancy: 6,
+    redundancy: 5,
     warnOnRelayFailure: false,
   },
   turnConfig: [
