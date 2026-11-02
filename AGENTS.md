@@ -14,3 +14,4 @@
 - Live sharing syncs folder Yjs docs over WebRTC via trystero/nostr (src/lib/p2p.ts) plus an always-on fallback that sends the same encrypted payloads as ephemeral Nostr events (src/lib/relay-channel.ts), because direct WebRTC fails on strict NATs/VPNs and free TURN servers are unreliable.
 - The app route is ssr:false because everything depends on browser crypto/IndexedDB/WebRTC.
 - Chat messages live in each folder's Yjs doc (Y.Array "chat"), so they persist encrypted and sync over the same P2P link as notes.
+- Desktop releases bundle the shared vault UI through electron/vite.config.ts as a static browser client, not the hosted SSR build; keep the nullnote app identity and loopback port stable so upgrades retain encrypted IndexedDB vaults.

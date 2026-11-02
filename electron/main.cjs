@@ -5,7 +5,6 @@ const { app, BrowserWindow, shell } = require("electron");
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
 
 const PORT = 47321;
 const DIST = path.join(__dirname, "dist");
@@ -15,20 +14,17 @@ const TYPES = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "te
   ".woff2": "font/woff2", ".txt": "text/plain" };
 
 async function startServer() {
-  const { default: handler } = await import(pathToFileURL(path.join(DIST, "server", "index.mjs")).href);
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
       const file = path.normalize(path.join(CLIENT, decodeURIComponent(url.pathname)));
-      if (file.startsWith(CLIENT) && fs.existsSync(file) && fs.statSync(file).isFile()) {
+      if ((file === CLIENT || file.startsWith(CLIENT + path.sep)) && fs.existsSync(file) && fs.statSync(file).isFile()) {
         res.writeHead(200, { "content-type": TYPES[path.extname(file)] || "application/octet-stream" });
         return fs.createReadStream(file).pipe(res);
       }
-      const r = await handler.fetch(new Request(url, { method: req.method, headers: req.headers }), {}, {
-        waitUntil() {}, passThroughOnException() {},
-      });
-      res.writeHead(r.status, Object.fromEntries(r.headers));
-      res.end(Buffer.from(await r.arrayBuffer()));
+      if (url.pathname !== "/") { res.writeHead(404); return res.end("Not found"); }
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      fs.createReadStream(path.join(CLIENT, "client.html")).pipe(res);
     } catch (e) {
       res.writeHead(500); res.end(String(e));
     }
