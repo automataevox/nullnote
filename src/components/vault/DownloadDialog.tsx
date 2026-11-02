@@ -58,7 +58,7 @@ export function DownloadButton() {
                 <Button key={d.file} variant="outline" asChild><a href={d.url} download={d.file}>{d.os}</a></Button>
               ))}
               <Button variant="outline" asChild className="col-span-2">
-                <a href={appImageAsset.url} download="nullnote-x86_64.AppImage">Linux — AppImage (universal)</a>
+                <a href={appImageAsset.url} download="nullnote-x86_64.AppImage">Linux — AppImage (universal, v1.0.1)</a>
               </Button>
             </div>
             <details className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">

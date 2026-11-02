@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Current
-- [ ] Replace outdated Linux AppImage with current encrypted pairing and sync transport.
-- [ ] Verify desktop-to-browser pairing and chat, then update the AppImage download.
+- [x] Replace outdated Linux AppImage with current encrypted pairing and sync transport.
+- [x] Verify desktop-to-browser pairing and two-way chat, then update the AppImage download.
 
 ## Done
 - [x] App icon: black tile, white monospace "n" (user-chosen after 2 concepts + inversion feedback)
