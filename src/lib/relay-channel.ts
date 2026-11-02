@@ -26,7 +26,7 @@ async function topicHash(t: string) {
   return [...h.slice(0, 16)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-export type RelayMsg = { from: string; data: Uint8Array; to?: string };
+export type RelayMsg = { from: string; data: Uint8Array; to?: string | undefined };
 
 /** Join a topic. `self` is this device's random id. Returns send + close. */
 export async function relayChannel(topic: string, self: string, onMsg: (m: RelayMsg) => void) {
