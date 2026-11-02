@@ -63,6 +63,7 @@
     "idb-keyval": "^6.3.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.66.0",
+    "nostr-tools": "^2.25.4",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
