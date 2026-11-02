@@ -19,7 +19,7 @@ export function NoteView({ doc, id, onDelete }: { doc: Y.Doc; id: string; onDele
   const fields = note.get("fields") as Y.Map<string>;
 
   return (
-    <div className="animate-fade-up mx-auto max-w-3xl px-8 py-10 md:px-14">
+    <div className="animate-fade-up mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-10 md:px-14">
       <div className="mb-2 flex items-center justify-between gap-4">
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
           {kind === "secret" ? `vault · ${secretType}` : "note"}
@@ -32,7 +32,7 @@ export function NoteView({ doc, id, onDelete }: { doc: Y.Doc; id: string; onDele
         value={(note.get("title") as string) ?? ""}
         onChange={(e) => doc.transact(() => { note.set("title", e.target.value); note.set("updatedAt", Date.now()); })}
         placeholder="Untitled"
-        className="mb-6 w-full bg-transparent text-4xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
+        className="mb-6 w-full min-w-0 bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50 sm:text-4xl"
       />
       {kind === "secret" && secretType && <SecretFields fields={fields} type={secretType} />}
       <RichEditor key={id} doc={doc} field={"n:" + id} placeholder={kind === "secret" ? "Notes…" : undefined} />
@@ -62,8 +62,8 @@ function SecretRow(p: { label: string; value: string; secret?: boolean | undefin
   };
   const cls = "border-0 bg-transparent font-mono text-sm shadow-none focus-visible:ring-0 px-0";
   return (
-    <div className="flex items-start gap-3 px-4 py-2.5">
-      <span className="w-28 shrink-0 pt-2 text-xs text-muted-foreground">{p.label}</span>
+    <div className="flex items-start gap-2 px-3 py-2.5 sm:gap-3 sm:px-4">
+      <span className="w-20 shrink-0 pt-2 text-xs text-muted-foreground sm:w-28">{p.label}</span>
       <div className="min-w-0 flex-1">
         {p.multiline && show ? (
           <Textarea value={p.value} onChange={(e) => p.onChange(e.target.value)} rows={4} className={cls} />

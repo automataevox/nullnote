@@ -6,6 +6,8 @@ import { createVault, unlockVault, vaultExists } from "@/lib/vault";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function UnlockScreen({ onUnlock }: { onUnlock: (k: CryptoKey) => void }) {
+  const cryptoAvailable =
+    typeof window !== "undefined" && window.isSecureContext && !!window.crypto?.subtle;
   const [exists, setExists] = useState<boolean | null>(null);
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
@@ -33,6 +35,23 @@ export function UnlockScreen({ onUnlock }: { onUnlock: (k: CryptoKey) => void })
   };
 
   if (exists === null) return null;
+
+  if (!cryptoAvailable) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8">
+        <ThemeToggle className="absolute right-4 top-4 z-10" />
+        <div className="w-full max-w-md space-y-3 rounded-xl border bg-background/90 p-6 shadow-lift sm:p-8">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Lock className="h-5 w-5" />
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight">Secure connection required</h1>
+          <p className="text-sm text-muted-foreground">
+            This browser only provides the encryption API over HTTPS or localhost. On a phone, use a trusted HTTPS development certificate or an HTTPS tunnel, then reopen this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6">

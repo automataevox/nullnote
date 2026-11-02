@@ -57,7 +57,7 @@ export function ChatPanel({ doc, shared, peers, onClose }: { doc: Y.Doc; shared:
   };
 
   return (
-    <aside className="animate-slide-in-right flex w-80 shrink-0 flex-col border-l bg-background">
+    <aside className="animate-slide-in-right fixed inset-0 z-30 flex w-full shrink-0 flex-col border-l bg-background md:relative md:inset-auto md:z-auto md:w-80">
       <div className="flex h-14 items-center justify-between border-b px-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{folderMeta(doc).get("name") ?? "Chat"}</p>

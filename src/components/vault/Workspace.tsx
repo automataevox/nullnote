@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import {
-  ChevronRight, FileText, MessageCircle, FolderPlus, KeyRound, Lock, MoreHorizontal, Plus, Share2, Users, CreditCard, Terminal, Code2,
+  ChevronRight, FileText, MessageCircle, FolderPlus, KeyRound, Lock, MoreHorizontal, Plus, Share2, Users, CreditCard, Terminal, Code2, Menu,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ let loadChain: Promise<void> = Promise.resolve();
 export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: () => void }) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [sel, setSel] = useState<Sel>(null);
+  const [navOpen, setNavOpen] = useState(false);
   const [shareFor, setShareFor] = useState<string | null>(null);
   const [chatFor, setChatFor] = useState<string | null>(null);
   const cleanups = useRef(new Map<string, (() => void)[]>());
@@ -162,8 +163,12 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
   const shareTarget = folders.find((f) => f.entry.id === shareFor);
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      <aside className="flex w-72 shrink-0 flex-col border-r bg-sidebar">
+    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+      {navOpen && <button aria-label="Close folder navigation" className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setNavOpen(false)} />}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r bg-sidebar transition-transform duration-200 md:static md:z-auto md:translate-x-0 md:transition-none",
+        navOpen ? "translate-x-0" : "-translate-x-full",
+      )}>
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="animate-spin-slow h-5 w-5 rounded-[5px] bg-primary shadow-glow" />
@@ -179,8 +184,8 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
         </div>
         <nav className="stagger flex-1 space-y-1 overflow-y-auto px-2 pb-4">
           {folders.map((f) => (
-            <FolderTree key={f.entry.id} folder={f} sel={sel} onSelect={(note) => setSel({ folder: f.entry.id, note })}
-              onNew={(k, t) => newNote(f.entry.id, k, t)} onShare={() => shareFolder(f.entry.id)} onRemove={() => removeFolder(f.entry.id)} onChat={() => setChatFor(f.entry.id)} />
+            <FolderTree key={f.entry.id} folder={f} sel={sel} onSelect={(note) => { setSel({ folder: f.entry.id, note }); setNavOpen(false); }}
+              onNew={(k, t) => { newNote(f.entry.id, k, t); setNavOpen(false); }} onShare={() => shareFolder(f.entry.id)} onRemove={() => removeFolder(f.entry.id)} onChat={() => { setChatFor(f.entry.id); setNavOpen(false); }} />
           ))}
         </nav>
         <div className="border-t px-4 py-3 font-mono text-[11px] text-muted-foreground">
@@ -188,7 +193,16 @@ export function Workspace({ vaultKey, onLock }: { vaultKey: CryptoKey; onLock: (
         </div>
       </aside>
 
-      <main className="relative flex-1 overflow-y-auto">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto">
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-3 backdrop-blur md:hidden">
+          <Button variant="ghost" size="icon" aria-label="Open folder navigation" onClick={() => setNavOpen(true)}>
+            <Menu className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="animate-spin-slow h-4 w-4 rounded-[4px] bg-primary shadow-glow" />
+            <span className="text-sm font-semibold tracking-tight">nullnote</span>
+          </div>
+        </header>
         {(current ?? folders[0]) && !chatFor && (
           <Button variant="accent" size="icon" aria-label="Open chat" className="fixed bottom-6 right-6 z-20 h-12 w-12 rounded-full"
             onClick={() => setChatFor((current ?? folders[0])!.entry.id)}>

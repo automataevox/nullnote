@@ -7,7 +7,7 @@
 import type { SimplePool as Pool } from "nostr-tools/pool";
 
 export const RELAYS = [
-  "wss://relay.dxvil.com"
+  "ws://217.154.115.156:7777"
 ];
 const KIND = 25087; // ephemeral range: relays forward, never store
 const CHUNK = 24_000;
