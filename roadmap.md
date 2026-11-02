@@ -1,5 +1,9 @@
 # Roadmap
 
+## Current
+- [ ] Replace outdated Linux AppImage with current encrypted pairing and sync transport.
+- [ ] Verify desktop-to-browser pairing and chat, then update the AppImage download.
+
 ## Done
 - [x] App icon: black tile, white monospace "n" (user-chosen after 2 concepts + inversion feedback)
 - [x] Regenerated favicon.png, icons 180/192/512, electron/icon.ico from inverted icon
