@@ -1,6 +1,23 @@
 import * as Y from "yjs";
 import { decryptBytes, encryptBytes, fromB64, importRawKey } from "./crypto";
 
+/** Well-known, reliable Nostr relays (discovery only) + public TURN fallback
+ *  for networks that block direct connections. Payloads stay encrypted. */
+const NET = {
+  relayConfig: {
+    urls: [
+      "wss://relay.damus.io", "wss://nos.lol", "wss://relay.primal.net",
+      "wss://nostr.mom", "wss://relay.snort.social",
+    ],
+    redundancy: 5,
+    warnOnRelayFailure: false,
+  },
+  turnConfig: [
+    { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turns:openrelay.metered.ca:443?transport=tcp"],
+      username: "openrelayproject", credential: "openrelayproject" },
+  ],
+};
+
 /**
  * Live sync of a folder's Y.Doc directly between peers (WebRTC).
  * Public Nostr relays are used only so peers can find each other; every
@@ -10,7 +27,7 @@ import { decryptBytes, encryptBytes, fromB64, importRawKey } from "./crypto";
 export async function connectRoom(doc: Y.Doc, roomId: string, keyB64: string, onPeers: (n: number) => void) {
   const { joinRoom } = await import("trystero/nostr");
   const key = await importRawKey(fromB64(keyB64));
-  const room = joinRoom({ appId: "nullnote-v1", password: keyB64 }, roomId, {
+  const room = joinRoom({ ...NET, appId: "nullnote-v1", password: keyB64 } as never, roomId, {
     onJoinError: (e) => console.warn("p2p join error", e.error),
   });
 
@@ -75,7 +92,7 @@ async function pairRoom(code: string) {
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("room:" + c)));
   const roomId = [...h.slice(0, 16)].map((x) => x.toString(16).padStart(2, "0")).join("");
   const { joinRoom } = await import("trystero/nostr");
-  const room = joinRoom({ appId: "nullnote-pair-v1", password: c }, roomId);
+  const room = joinRoom({ ...NET, appId: "nullnote-pair-v1", password: c } as never, roomId);
   return { key, room };
 }
 
