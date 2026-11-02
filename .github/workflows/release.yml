@@ -2,6 +2,8 @@ name: Desktop release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -41,9 +43,9 @@ jobs:
       - name: Build Electron app
         shell: bash
         env:
-          NULLNOTE_VERSION: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('0.0.0-dev.{0}', github.run_number) }}
         run: |
-          export NULLNOTE_VERSION="${NULLNOTE_VERSION#v}"
+          export NULLNOTE_VERSION="${RELEASE_VERSION#v}"
           bash electron/build.sh "${{ matrix.target }}"
 
       - name: Upload build artifact
@@ -67,5 +69,11 @@ jobs:
       - name: Create release and attach downloads
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'continuous' }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || format('Continuous build {0}', github.run_number) }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          make_latest: ${{ github.ref_type == 'tag' && 'true' || 'false' }}
+          overwrite_files: true
           generate_release_notes: true
           files: release-assets/*
