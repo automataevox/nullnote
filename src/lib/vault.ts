@@ -5,7 +5,10 @@ import { decryptBytes, decryptJson, deriveKey, encryptBytes, encryptJson, random
 export type FolderEntry = { id: string; shared?: { room: string; key: string } };
 type VaultMeta = { salt: Uint8Array; check: Uint8Array };
 
-export const uid = () => crypto.randomUUID();
+export const uid = () => {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (x) => x.toString(16).padStart(2, "0")).join("");
+};
 
 export async function vaultExists() {
   return !!(await get<VaultMeta>("meta"));
