@@ -7,8 +7,7 @@
 import type { SimplePool as Pool } from "nostr-tools/pool";
 
 export const RELAYS = [
-  "wss://relay.damus.io", "wss://nos.lol", "wss://relay.primal.net",
-  "wss://nostr.mom", "wss://relay.snort.social",
+  "wss://relay.dxvil.com"
 ];
 const KIND = 25087; // ephemeral range: relays forward, never store
 const CHUNK = 24_000;

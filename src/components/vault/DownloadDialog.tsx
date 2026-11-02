@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { Download, Monitor, Smartphone, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import winAsset from "../../../public/downloads/nullnote-win32-x64.zip.asset.json";
-import macArmAsset from "../../../public/downloads/nullnote-darwin-arm64.zip.asset.json";
-import macIntelAsset from "../../../public/downloads/nullnote-darwin-x64.zip.asset.json";
-import linuxAsset from "../../../public/downloads/nullnote-linux-x64.tar.gz.asset.json";
-import appImageAsset from "../../../public/downloads/nullnote-x86_64.AppImage.asset.json";
+
+const RELEASE_DOWNLOAD = "https://github.com/automataevox/nullnote/releases/latest/download";
 
 type BIP = Event & { prompt: () => Promise<void> };
 let deferred: BIP | null = null;
@@ -15,10 +12,26 @@ if (typeof window !== "undefined") {
 }
 
 const DESKTOP = [
-  { os: "Windows", file: "nullnote-win32-x64.zip", url: winAsset.url },
-  { os: "macOS (Apple Silicon)", file: "nullnote-darwin-arm64.zip", url: macArmAsset.url },
-  { os: "macOS (Intel)", file: "nullnote-darwin-x64.zip", url: macIntelAsset.url },
-  { os: "Linux (tar.gz)", file: "nullnote-linux-x64.tar.gz", url: linuxAsset.url },
+  {
+    os: "Windows",
+    file: "nullnote-win32-x64.zip",
+    url: `${RELEASE_DOWNLOAD}/nullnote-win32-x64.zip`,
+  },
+  {
+    os: "macOS (Apple Silicon)",
+    file: "nullnote-darwin-arm64.zip",
+    url: `${RELEASE_DOWNLOAD}/nullnote-darwin-arm64.zip`,
+  },
+  {
+    os: "macOS (Intel)",
+    file: "nullnote-darwin-x64.zip",
+    url: `${RELEASE_DOWNLOAD}/nullnote-darwin-x64.zip`,
+  },
+  {
+    os: "Linux (tar.gz)",
+    file: "nullnote-linux-x64.tar.gz",
+    url: `${RELEASE_DOWNLOAD}/nullnote-linux-x64.tar.gz`,
+  },
 ];
 
 export function DownloadButton() {
@@ -58,7 +71,7 @@ export function DownloadButton() {
                 <Button key={d.file} variant="outline" asChild><a href={d.url} download={d.file}>{d.os}</a></Button>
               ))}
               <Button variant="outline" asChild className="col-span-2">
-                <a href={appImageAsset.url} download="nullnote-x86_64.AppImage">Linux — AppImage (universal, v1.0.1)</a>
+                <a href={`${RELEASE_DOWNLOAD}/nullnote-x86_64.AppImage`} download="nullnote-x86_64.AppImage">Linux — AppImage</a>
               </Button>
             </div>
             <details className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
