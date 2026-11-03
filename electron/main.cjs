@@ -84,7 +84,7 @@ async function checkForUpdates() {
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
-autoUpdater.allowPrerelease = /-dev(?:\.|-)/i.test(app.getVersion());
+autoUpdater.allowPrerelease = app.getVersion().includes("-dev.");
 autoUpdater.on("checking-for-update", () => setUpdateStatus({ state: "checking" }));
 autoUpdater.on("update-available", (info) => setUpdateStatus({ state: "available", latestVersion: info.version }));
 autoUpdater.on("update-not-available", (info) => setUpdateStatus({ state: "current", latestVersion: info.version }));

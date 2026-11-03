@@ -36,3 +36,12 @@ NULLNOTE_HTTPS_CERT=.cert/dev-cert.pem NULLNOTE_HTTPS_KEY=.cert/dev-key.pem npm 
 ```
 
 Open the HTTPS address and port printed by Vite on the phone. The certificate must be trusted by the phone; accepting a browser warning may not enable secure-context APIs. Keep the certificate and private key local and do not commit them.
+
+## Automatic deployment
+
+Pushes to `main` build desktop prerelease installers, publish them to GitHub Releases, and deploy the web app with Nitro to the existing Cloudflare Worker. Configure these GitHub Actions repository secrets for the Worker deployment:
+
+- `CLOUDFLARE_API_TOKEN` with permission to deploy Workers in the account.
+- `CLOUDFLARE_ACCOUNT_ID` for the account that owns `nullnote.dxvil.com`.
+
+Version tags (`vX.Y.Z`) publish stable desktop releases. Main-branch builds use semver prerelease tags so Electron's GitHub updater can discover the Linux AppImage prerelease feed.

@@ -69,7 +69,7 @@ jobs:
       - name: Create release and attach downloads
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'continuous' }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.0.0-dev.{0}', github.run_number) }}
           name: ${{ github.ref_type == 'tag' && github.ref_name || format('Continuous build {0}', github.run_number) }}
           target_commitish: ${{ github.sha }}
           prerelease: ${{ github.ref_type != 'tag' }}
