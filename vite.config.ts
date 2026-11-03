@@ -10,8 +10,8 @@ import packageJson from "./package.json";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 const gitVersion = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
-const httpsCert = process.env.NULLNOTE_HTTPS_CERT;
-const httpsKey = process.env.NULLNOTE_HTTPS_KEY;
+const httpsCert = process.env["NULLNOTE_HTTPS_CERT"];
+const httpsKey = process.env["NULLNOTE_HTTPS_KEY"];
 
 if (!!httpsCert !== !!httpsKey) {
   throw new Error("Set both NULLNOTE_HTTPS_CERT and NULLNOTE_HTTPS_KEY to enable HTTPS.");
@@ -21,7 +21,7 @@ export default defineConfig({
   vite: {
     define: {
       "import.meta.env.VITE_GIT_VERSION": JSON.stringify(gitVersion),
-      "import.meta.env.VITE_APP_VERSION": JSON.stringify(process.env.NULLNOTE_VERSION || packageJson.version),
+      "import.meta.env.VITE_APP_VERSION": JSON.stringify(process.env["NULLNOTE_VERSION"] || packageJson.version),
     },
     ...(httpsCert && httpsKey
       ? {

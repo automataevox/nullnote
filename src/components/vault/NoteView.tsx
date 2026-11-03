@@ -22,7 +22,7 @@ export function NoteView({ doc, id, onDelete }: { doc: Y.Doc; id: string; onDele
     <div className="animate-fade-up mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-10 md:px-14">
       <div className="mb-2 flex items-center justify-between gap-4">
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-          {kind === "secret" ? `vault · ${secretType}` : "note"}
+          {kind === "secret" ? (secretType === "habit" ? "habit" : `vault · ${secretType}`) : "note"}
         </span>
         <Button variant="ghost" size="icon" aria-label="Delete note" onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
@@ -34,6 +34,7 @@ export function NoteView({ doc, id, onDelete }: { doc: Y.Doc; id: string; onDele
         placeholder="Untitled"
         className="mb-6 w-full min-w-0 bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50 sm:text-4xl"
       />
+      {kind === "secret" && secretType === "habit" && <HabitGrid fields={fields} />}
       {kind === "secret" && secretType && <SecretFields fields={fields} type={secretType} />}
       <RichEditor key={id} doc={doc} field={"n:" + id} placeholder={kind === "secret" ? "Notes…" : undefined} />
     </div>
@@ -76,6 +77,40 @@ function SecretRow(p: { label: string; value: string; secret?: boolean | undefin
         {p.secret && <Button variant="ghost" size="icon" aria-label={show ? "Hide" : "Show"} onClick={() => setShow(!show)}>{show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</Button>}
         <Button variant="ghost" size="icon" aria-label="Copy" onClick={copy} disabled={!p.value}><Copy className="h-3.5 w-3.5" /></Button>
       </div>
+    </div>
+  );
+}
+
+const dayKey = (d: Date) => "d:" + d.toISOString().slice(0, 10);
+
+function HabitGrid({ fields }: { fields: Y.Map<string> }) {
+  useY(fields);
+  const today = new Date(); today.setUTCHours(12, 0, 0, 0);
+  const days = Array.from({ length: 84 }, (_, i) => { const d = new Date(today); d.setUTCDate(d.getUTCDate() - (83 - i)); return d; });
+  const done = (d: Date) => fields.get(dayKey(d)) === "1";
+  const toggle = (d: Date) => { const k = dayKey(d); if (done(d)) fields.delete(k); else fields.set(k, "1"); };
+  let streak = 0;
+  for (let i = days.length - 1; i >= 0; i--) { if (done(days[i]!)) streak++; else if (i === days.length - 1) continue; else break; }
+  const last30 = days.slice(-30).filter(done).length;
+  return (
+    <div className="mb-6 rounded-xl border p-4 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-6">
+          <div><div className="text-2xl font-semibold">{streak}</div><div className="text-xs text-muted-foreground">day streak</div></div>
+          <div><div className="text-2xl font-semibold">{Math.round((last30 / 30) * 100)}%</div><div className="text-xs text-muted-foreground">last 30 days</div></div>
+        </div>
+        <Button variant={done(today) ? "secondary" : "default"} onClick={() => toggle(today)}>
+          {done(today) ? "Done today ✓" : "Mark today done"}
+        </Button>
+      </div>
+      <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto">
+        {days.map((d) => (
+          <button key={d.toISOString()} onClick={() => toggle(d)} title={d.toISOString().slice(0, 10)}
+            aria-label={`${d.toISOString().slice(0, 10)} ${done(d) ? "done" : "not done"}`}
+            className={`h-4 w-4 rounded-sm transition-colors sm:h-5 sm:w-5 ${done(d) ? "bg-primary" : "bg-muted hover:bg-muted-foreground/30"}`} />
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">Last 12 weeks — tap any day to toggle.</p>
     </div>
   );
 }

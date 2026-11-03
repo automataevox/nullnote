@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import {
-  ChevronRight, FileText, MessageCircle, FolderPlus, KeyRound, Lock, MoreHorizontal, Plus, Share2, Users, CreditCard, Terminal, Code2, Menu,
+  ChevronRight, FileText, MessageCircle, FolderPlus, KeyRound, Lock, MoreHorizontal, Plus, Share2, Users, CreditCard, Terminal, Code2, Menu, CalendarCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -272,7 +272,7 @@ function ShareLink({ shared, peers }: { shared: { room: string; key: string }; p
   );
 }
 
-const ICON = { note: FileText, password: KeyRound, ssh: Terminal, api: Code2, card: CreditCard } as const;
+const ICON = { note: FileText, password: KeyRound, ssh: Terminal, api: Code2, card: CreditCard, habit: CalendarCheck } as const;
 
 function FolderTree(p: {
   folder: Folder; sel: Sel; onSelect: (id: string) => void; onNew: (k: "note" | "secret", t?: SecretType) => void;
@@ -318,6 +318,7 @@ function FolderTree(p: {
             <DropdownMenuItem onClick={() => p.onNew("secret", "ssh")}><Terminal className="mr-2 h-4 w-4" />SSH key</DropdownMenuItem>
             <DropdownMenuItem onClick={() => p.onNew("secret", "api")}><Code2 className="mr-2 h-4 w-4" />API credential</DropdownMenuItem>
             <DropdownMenuItem onClick={() => p.onNew("secret", "card")}><CreditCard className="mr-2 h-4 w-4" />Card</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => p.onNew("secret", "habit")}><CalendarCheck className="mr-2 h-4 w-4" />Habit tracker</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>
