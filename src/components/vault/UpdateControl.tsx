@@ -22,6 +22,7 @@ type UpdateStatus = {
   latestVersion?: string;
   percent?: number;
   error?: string;
+  releaseNotes?: string | { note: string | null; version: string }[];
 };
 
 type UpdaterApi = {
@@ -58,6 +59,8 @@ export function UpdateControl({ onInstall }: { onInstall: () => Promise<void> })
 
   if (!updater) return null;
 
+  const changelog = normalizeReleaseNotes(status.releaseNotes);
+
   if (status.state === "current") {
     return (
       <Button
@@ -72,14 +75,17 @@ export function UpdateControl({ onInstall }: { onInstall: () => Promise<void> })
   }
   if (status.state === "available") {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full justify-start text-xs"
-        onClick={() => void updater.download()}
-      >
-        <ArrowDownToLine className="h-3.5 w-3.5" /> Update to {status.latestVersion}
-      </Button>
+      <div className="space-y-1">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-start text-xs"
+          onClick={() => void updater.download()}
+        >
+          <ArrowDownToLine className="h-3.5 w-3.5" /> Update to {status.latestVersion}
+        </Button>
+        <Changelog version={status.latestVersion} entries={changelog} />
+      </div>
     );
   }
   if (status.state === "downloading") {
@@ -92,26 +98,32 @@ export function UpdateControl({ onInstall }: { onInstall: () => Promise<void> })
   }
   if (status.state === "downloaded") {
     return (
-      <Button
-        variant="accent"
-        size="sm"
-        className="w-full justify-start text-xs"
-        onClick={() => void onInstall()}
-      >
-        <RotateCw className="h-3.5 w-3.5" /> Restart to install {status.latestVersion}
-      </Button>
+      <div className="space-y-1">
+        <Button
+          variant="accent"
+          size="sm"
+          className="w-full justify-start text-xs"
+          onClick={() => void onInstall()}
+        >
+          <RotateCw className="h-3.5 w-3.5" /> Restart to install {status.latestVersion}
+        </Button>
+        <Changelog version={status.latestVersion} entries={changelog} />
+      </div>
     );
   }
   if (status.state === "manual") {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full justify-start text-xs"
-        onClick={() => void updater.openRelease()}
-      >
-        <ExternalLink className="h-3.5 w-3.5" /> Download update {status.latestVersion}
-      </Button>
+      <div className="space-y-1">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-start text-xs"
+          onClick={() => void updater.openRelease()}
+        >
+          <ExternalLink className="h-3.5 w-3.5" /> Download update {status.latestVersion}
+        </Button>
+        <Changelog version={status.latestVersion} entries={changelog} />
+      </div>
     );
   }
   if (status.state === "error") {
@@ -132,5 +144,38 @@ export function UpdateControl({ onInstall }: { onInstall: () => Promise<void> })
     <div className="flex items-center gap-2 px-2 py-1.5 font-mono text-[11px] text-muted-foreground">
       <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> Checking for updates…
     </div>
+  );
+}
+
+function normalizeReleaseNotes(notes: UpdateStatus["releaseNotes"]): string[] {
+  const source = Array.isArray(notes)
+    ? notes.map((entry) => entry.note ?? "").join("\n")
+    : (notes ?? "");
+  return source
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^#{1,6}\s*/, "")
+        .replace(/^[-*+]\s*/, ""),
+    )
+    .map((line) => line.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/`([^`]+)`/g, "$1"))
+    .filter((line) => line.length > 0);
+}
+
+function Changelog({ version, entries }: { version: string | undefined; entries: string[] }) {
+  return (
+    <details className="update-changelog">
+      <summary>What&apos;s new{version ? ` in ${version}` : ""}</summary>
+      {entries.length ? (
+        <ul>
+          {entries.map((entry, index) => (
+            <li key={`${index}-${entry}`}>{entry}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>No release notes were published for this update.</p>
+      )}
+    </details>
   );
 }

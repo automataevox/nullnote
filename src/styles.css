@@ -162,7 +162,36 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    min-height: 100dvh;
   }
+}
+
+.app-content {
+  position: relative;
+  z-index: 2;
+  min-height: 100dvh;
+}
+
+.folder-action {
+  opacity: 1;
+  transition: opacity 140ms ease, color 140ms ease, background-color 140ms ease;
+}
+@media (hover: hover) {
+  .folder-action { opacity: 0; }
+  .group:hover .folder-action, .folder-action:focus-visible { opacity: 1; }
+}
+
+.pointer-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.13;
+  mix-blend-mode: soft-light;
+  background:
+    radial-gradient(900px circle at var(--pointer-x, 50vw) var(--pointer-y, 42vh), color-mix(in oklab, var(--highlight) 3.5%, transparent), transparent 76%),
+    radial-gradient(1100px circle at 82% 18%, color-mix(in oklab, var(--chart-2) 1.5%, transparent), transparent 78%);
+  animation: atmosphere-breathe 14s ease-in-out infinite alternate;
 }
 
 @layer base {
@@ -179,8 +208,21 @@
 .prose-note ol { list-style: decimal; padding-left: 1.4em; }
 .prose-note blockquote { border-left: 2px solid var(--foreground); padding-left: 1em; color: var(--muted-foreground); }
 .prose-note code { font-family: var(--font-mono); font-size: 0.85em; background: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; }
-.prose-note pre { font-family: var(--font-mono); font-size: 0.85rem; background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9em 1em; overflow-x: auto; }
+.prose-note pre { font-family: var(--font-mono); font-size: 0.85rem; background: color-mix(in oklab, var(--highlight-soft) 26%, white); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9em 1em; overflow-x: auto; }
 .prose-note pre code { background: none; border: 0; padding: 0; }
+.prose-note .hljs-keyword, .prose-note .hljs-selector-tag, .prose-note .hljs-literal { color: oklch(0.52 0.2 286); font-weight: 600; }
+.prose-note .hljs-string, .prose-note .hljs-attr { color: oklch(0.49 0.14 151); }
+.prose-note .hljs-number, .prose-note .hljs-built_in, .prose-note .hljs-symbol { color: oklch(0.57 0.16 47); }
+.prose-note .hljs-title, .prose-note .hljs-function, .prose-note .hljs-section { color: oklch(0.5 0.17 235); font-weight: 600; }
+.prose-note .hljs-comment, .prose-note .hljs-quote { color: oklch(0.54 0.04 255); font-style: italic; }
+.prose-note .hljs-variable, .prose-note .hljs-params, .prose-note .hljs-property { color: oklch(0.52 0.16 15); }
+.dark .prose-note pre { background: color-mix(in oklab, var(--muted) 76%, var(--highlight-soft)); }
+.dark .prose-note .hljs-keyword, .dark .prose-note .hljs-selector-tag, .dark .prose-note .hljs-literal { color: oklch(0.78 0.13 295); }
+.dark .prose-note .hljs-string, .dark .prose-note .hljs-attr { color: oklch(0.78 0.13 155); }
+.dark .prose-note .hljs-number, .dark .prose-note .hljs-built_in, .dark .prose-note .hljs-symbol { color: oklch(0.82 0.13 68); }
+.dark .prose-note .hljs-title, .dark .prose-note .hljs-function, .dark .prose-note .hljs-section { color: oklch(0.78 0.13 225); }
+.dark .prose-note .hljs-comment, .dark .prose-note .hljs-quote { color: oklch(0.68 0.04 255); }
+.dark .prose-note .hljs-variable, .dark .prose-note .hljs-params, .dark .prose-note .hljs-property { color: oklch(0.78 0.12 20); }
 .prose-note hr { border: 0; border-top: 1px solid var(--border); margin: 1.5em 0; }
 .prose-note a { color: var(--highlight); text-decoration: underline; }
 .prose-note ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
@@ -189,12 +231,57 @@
 .prose-note ul[data-type="taskList"] input { accent-color: var(--highlight); }
 .prose-note p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--muted-foreground); float: left; height: 0; pointer-events: none; }
 
+.editor-completions {
+  position: fixed;
+  z-index: 70;
+  width: min(320px, calc(100vw - 24px));
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--highlight) 25%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in oklab, white 96%, var(--highlight-soft));
+  box-shadow: 0 12px 34px -18px color-mix(in oklab, var(--foreground) 34%, transparent), 0 3px 12px -8px color-mix(in oklab, var(--highlight) 30%, transparent);
+  padding: 5px;
+  animation: completion-arrive 140ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.dark .editor-completions { background: color-mix(in oklab, var(--popover) 96%, var(--highlight-soft)); }
+.editor-completion { display: flex; width: 100%; align-items: center; gap: 10px; border: 0; border-radius: 7px; background: transparent; padding: 9px; color: var(--foreground); cursor: pointer; transition: background-color 120ms ease, transform 120ms ease; }
+.editor-completion:hover, .editor-completion.is-active { background: color-mix(in oklab, var(--highlight-soft) 70%, var(--background)); }
+.editor-completion:active { transform: scale(0.99); }
+.editor-completion-icon { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; border-radius: 7px; }
+.editor-completion-icon.is-calculator { background: oklch(0.93 0.055 250); color: oklch(0.48 0.18 255); }
+.editor-completion-icon.is-calendar { background: oklch(0.94 0.06 155); color: oklch(0.43 0.12 155); }
+.editor-completion-plugin { flex: 0 0 auto; border-radius: 999px; background: oklch(0.95 0.045 155); padding: 3px 7px; color: oklch(0.43 0.1 155); font-size: 10px; text-transform: capitalize; }
+.editor-completion-hint { border-top: 1px solid var(--border); padding: 6px 9px 3px; color: var(--muted-foreground); font-size: 10px; }
+@keyframes completion-arrive { from { opacity: 0; transform: translateY(3px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.update-changelog { padding: 0 8px 4px; color: var(--muted-foreground); font-size: 11px; }
+.update-changelog summary { width: fit-content; cursor: pointer; color: var(--highlight); font-weight: 550; }
+.update-changelog ul { max-height: 180px; overflow-y: auto; margin: 6px 0 0; padding-left: 17px; list-style: disc; }
+.update-changelog li + li { margin-top: 4px; }
+.update-changelog p { margin-top: 6px; }
+
+.magnetic-button {
+  translate: var(--magnetic-x, 0px) var(--magnetic-y, 0px);
+  transition: translate 180ms cubic-bezier(0.2, 0.8, 0.2, 1), scale 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (hover: hover) {
+  .magnetic-button:hover { scale: 1.045; }
+  .habit-day:hover { transform: translateY(-2px) scale(1.035); }
+  .habit-cell:hover:enabled { transform: scale(1.45); }
+}
+.habit-day:active { transform: scale(0.96); }
+.habit-cell { transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 140ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  .magnetic-button { translate: none; transition: none; }
+  .magnetic-button:hover, .habit-day:hover, .habit-day:active, .habit-cell:hover:enabled { scale: 1; transform: none; }
+}
+
 @keyframes fade-up { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes pop-in { from { opacity: 0; transform: scale(0.85) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes slide-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
 @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--highlight) 60%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
 @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes atmosphere-breathe { from { opacity: 0.09; } to { opacity: 0.16; } }
 
 @utility bg-grid {
   background-image:
@@ -220,10 +307,12 @@
   & > *:nth-child(n+6) { animation-delay: 200ms; }
 }
 @utility orb {
-  background: radial-gradient(circle, color-mix(in oklab, var(--highlight) 35%, transparent), transparent 65%);
-  filter: blur(40px);
+  background: radial-gradient(circle, color-mix(in oklab, var(--highlight) 18%, transparent), transparent 70%);
+  filter: blur(72px);
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .pointer-atmosphere { animation: none; opacity: 0.06; }
+  .editor-completions { animation: none; }
 }
 ::selection { background: var(--highlight-soft); }

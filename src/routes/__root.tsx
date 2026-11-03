@@ -93,7 +93,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/icons/icon-180.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -109,7 +112,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <div className="pointer-atmosphere" aria-hidden="true" />
+        <div className="app-content">{children}</div>
         <Scripts />
       </body>
     </html>
@@ -118,6 +122,50 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    let target = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.42 };
+    let current = { ...target };
+
+    const easePointer = () => {
+      current.x += (target.x - current.x) * 0.14;
+      current.y += (target.y - current.y) * 0.14;
+      root.style.setProperty("--pointer-x", `${current.x.toFixed(1)}px`);
+      root.style.setProperty("--pointer-y", `${current.y.toFixed(1)}px`);
+
+      if (Math.abs(target.x - current.x) + Math.abs(target.y - current.y) > 0.7) {
+        frame = requestAnimationFrame(easePointer);
+      } else {
+        current = { ...target };
+        root.style.setProperty("--pointer-x", `${current.x.toFixed(1)}px`);
+        root.style.setProperty("--pointer-y", `${current.y.toFixed(1)}px`);
+        frame = 0;
+      }
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch" || reducedMotion.matches) return;
+      target = { x: event.clientX, y: event.clientY };
+      if (!frame) frame = requestAnimationFrame(easePointer);
+    };
+    const onPointerLeave = () => {
+      target = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.42 };
+      if (!frame && !reducedMotion.matches) frame = requestAnimationFrame(easePointer);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onPointerLeave);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      document.documentElement.removeEventListener("pointerleave", onPointerLeave);
+      if (frame) cancelAnimationFrame(frame);
+      root.style.removeProperty("--pointer-x");
+      root.style.removeProperty("--pointer-y");
+      root.style.removeProperty("--pointer-tint");
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

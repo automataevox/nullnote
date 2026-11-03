@@ -46,10 +46,13 @@ const DESKTOP = [
 export function DownloadButton() {
   const [open, setOpen] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
+  const isDesktopApp = typeof window !== "undefined" && Boolean(window.nullnoteUpdater);
 
   useEffect(() => {
     if (open) setCanInstall(!!deferred);
   }, [open]);
+
+  if (isDesktopApp) return null;
 
   return (
     <>

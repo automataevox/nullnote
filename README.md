@@ -45,3 +45,28 @@ Pushes to `main` build desktop prerelease installers, publish them to GitHub Rel
 - `CLOUDFLARE_ACCOUNT_ID` for the account that owns `nullnote.dxvil.com`.
 
 Version tags (`vX.Y.Z`) publish stable desktop releases. Main-branch builds use semver prerelease tags so Electron's GitHub updater can discover the Linux AppImage prerelease feed.
+
+## Editor plugins
+
+The editor exposes `EditorPlugin` and `registerEditorPlugin` from `src/lib/editor-plugins/registry.ts`. Plugins are TypeScript modules bundled with the app; arbitrary remote scripts are not loaded. A plugin returns cursor-context completions with the text range to replace:
+
+```ts
+registerEditorPlugin({
+  id: "community.example",
+  name: "Example",
+  suggest: ({ textBeforeCursor }) =>
+    textBeforeCursor.endsWith("!hello")
+      ? [
+          {
+            pluginId: "community.example",
+            title: "Hello",
+            detail: "Insert a greeting",
+            insertText: "Hello!",
+            deleteBefore: 6,
+          },
+        ]
+      : [],
+});
+```
+
+Built-in Calculator completions recognize arithmetic followed by `=`; Calendar completions recognize `@date`, `@today`, `@tomorrow`, and `@yesterday`. Tab or Enter inserts a suggestion, while Escape dismisses it.

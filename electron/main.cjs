@@ -73,7 +73,11 @@ async function checkForUpdates() {
       const release = await response.json();
       const latestVersion = String(release.tag_name || "").replace(/^v/, "");
       const hasUpdate = compareVersions(latestVersion, app.getVersion()) > 0;
-      setUpdateStatus({ state: hasUpdate ? "manual" : "current", latestVersion });
+      setUpdateStatus({
+        state: hasUpdate ? "manual" : "current",
+        latestVersion,
+        releaseNotes: typeof release.body === "string" ? release.body : "",
+      });
       return updateStatus;
     }
 
@@ -88,10 +92,22 @@ autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 autoUpdater.allowPrerelease = app.getVersion().includes("-dev.");
 autoUpdater.on("checking-for-update", () => setUpdateStatus({ state: "checking" }));
-autoUpdater.on("update-available", (info) => setUpdateStatus({ state: "available", latestVersion: info.version }));
-autoUpdater.on("update-not-available", (info) => setUpdateStatus({ state: "current", latestVersion: info.version }));
+autoUpdater.on("update-available", (info) => setUpdateStatus({
+  state: "available",
+  latestVersion: info.version,
+  releaseNotes: info.releaseNotes ?? "",
+}));
+autoUpdater.on("update-not-available", (info) => setUpdateStatus({
+  state: "current",
+  latestVersion: info.version,
+  releaseNotes: info.releaseNotes ?? "",
+}));
 autoUpdater.on("download-progress", (progress) => setUpdateStatus({ state: "downloading", percent: progress.percent }));
-autoUpdater.on("update-downloaded", (info) => setUpdateStatus({ state: "downloaded", latestVersion: info.version }));
+autoUpdater.on("update-downloaded", (info) => setUpdateStatus({
+  state: "downloaded",
+  latestVersion: info.version,
+  releaseNotes: info.releaseNotes ?? "",
+}));
 autoUpdater.on("error", (error) => setUpdateStatus({ state: "error", error: error.message }));
 
 function assertAppSender(event) {
