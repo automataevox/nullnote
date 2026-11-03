@@ -71,7 +71,7 @@ export function autosave(key: CryptoKey, id: string, doc: Y.Doc) {
 
 // ---------- Document model helpers ----------
 export type NoteKind = "note" | "secret";
-export type SecretType = "password" | "ssh" | "api" | "card";
+export type SecretType = "password" | "ssh" | "api" | "card" | "habit";
 
 export const notesMap = (doc: Y.Doc) => doc.getMap<Y.Map<unknown>>("notes");
 export const folderMeta = (doc: Y.Doc) => doc.getMap<string>("meta");
@@ -108,6 +108,11 @@ export const SECRET_FIELDS: Record<SecretType, { key: string; label: string; sec
     { key: "service", label: "Service" },
     { key: "keyId", label: "Key ID" },
     { key: "secret", label: "Secret", secret: true },
+  ],
+  habit: [
+    { key: "goal", label: "Goal" },
+    { key: "frequency", label: "Frequency" },
+    { key: "reminder", label: "Reminder" },
   ],
   card: [
     { key: "holder", label: "Cardholder" },
