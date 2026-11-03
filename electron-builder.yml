@@ -6,9 +6,13 @@ directories:
 files:
   - main.cjs
   - preload.cjs
+  - icon.png
   - package.json
   - node_modules/**/*
   - dist/client/**/*
+extraResources:
+  - from: public/icons/icon-512.png
+    to: icon.png
 asar: true
 publish:
   provider: github
@@ -28,6 +32,7 @@ nsis:
 linux:
   category: Office
   icon: public/icons/icon-512.png
+  syncDesktopName: true
   artifactName: nullnote-x86_64.AppImage
   target:
     - target: AppImage

@@ -1,7 +1,7 @@
 // nullnote desktop: runs the built app fully offline on this computer.
 // A tiny local server (127.0.0.1 only) serves the files; a fixed port keeps
 // the encrypted vault (IndexedDB) at the same address between launches.
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, nativeImage, shell } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const http = require("node:http");
 const fs = require("node:fs");
@@ -10,6 +10,8 @@ const path = require("node:path");
 const PORT = 47321;
 const DIST = path.join(__dirname, "dist");
 const CLIENT = path.join(DIST, "client");
+const WINDOW_ICON = nativeImage.createFromBuffer(fs.readFileSync(path.join(__dirname, "icon.png")));
+if (process.platform === "linux") app.setDesktopName("com.electron.nullnote");
 let updateStatus = { state: app.isPackaged ? "checking" : "unsupported", currentVersion: app.getVersion() };
 const TYPES = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".png": "image/png",
   ".ico": "image/x-icon", ".svg": "image/svg+xml", ".json": "application/json", ".webmanifest": "application/manifest+json",
@@ -122,6 +124,7 @@ ipcMain.handle("updater:open-release", (event) => {
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280, height: 820, minWidth: 720, minHeight: 500, title: "nullnote", autoHideMenuBar: true,
+    icon: WINDOW_ICON,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false },
   });
   win.webContents.setWindowOpenHandler(({ url }) => { void shell.openExternal(url); return { action: "deny" }; });

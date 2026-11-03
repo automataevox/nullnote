@@ -19,9 +19,10 @@ rm -rf "$STAGE" && mkdir -p "$STAGE"
 cp electron/main.cjs "$STAGE/"
 cp electron/preload.cjs "$STAGE/"
 cp electron/icon.ico "$STAGE/icon.ico"
+cp public/icons/icon-512.png "$STAGE/icon.png"
 mkdir -p "$STAGE/dist"
 cp -r electron-release/client "$STAGE/dist/client"
-printf '{"name":"nullnote","version":"%s","main":"main.cjs","dependencies":{"electron-updater":"%s"}}\n' \
+printf '{"name":"nullnote","version":"%s","main":"main.cjs","desktopName":"com.electron.nullnote","dependencies":{"electron-updater":"%s"}}\n' \
   "$VERSION" "$(node -p 'require("./package.json").dependencies["electron-updater"]')" > "$STAGE/package.json"
 npm install --prefix "$STAGE" --omit=dev --no-audit --no-fund
 case "$TARGET" in
