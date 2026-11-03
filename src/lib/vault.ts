@@ -1,4 +1,4 @@
-import { get, set, del } from "idb-keyval";
+import { get, set, del, keys as getAllKeys } from "idb-keyval";
 import * as Y from "yjs";
 import { decryptBytes, decryptJson, deriveKey, encryptBytes, encryptJson, randomBytes } from "./crypto";
 
@@ -12,6 +12,14 @@ export const uid = () => {
 
 export async function vaultExists() {
   return !!(await get<VaultMeta>("meta"));
+}
+
+export async function deleteVault() {
+  const keys = await getAllKeys();
+  const vaultKeys = keys.filter(
+    (key) => key === "meta" || key === "index" || (typeof key === "string" && key.startsWith("doc:")),
+  );
+  await Promise.all(vaultKeys.map((key) => del(key)));
 }
 
 export async function createVault(password: string): Promise<CryptoKey> {
