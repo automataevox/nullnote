@@ -16,6 +16,7 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy to Cloudflare Workers
+    if: github.actor == 'automataevox'
     runs-on: ubuntu-latest
     steps:
       - name: Check out source

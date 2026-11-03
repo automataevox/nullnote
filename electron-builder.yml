@@ -27,6 +27,7 @@ nsis:
   allowToChangeInstallationDirectory: false
 linux:
   category: Office
+  icon: public/icons/icon-512.png
   artifactName: nullnote-x86_64.AppImage
   target:
     - target: AppImage

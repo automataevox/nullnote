@@ -13,6 +13,7 @@ permissions:
 jobs:
   build:
     name: Build ${{ matrix.name }}
+    if: github.actor == 'automataevox'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -57,6 +58,7 @@ jobs:
 
   release:
     name: Publish GitHub Release
+    if: github.actor == 'automataevox'
     needs: build
     runs-on: ubuntu-latest
     steps:
