@@ -82,35 +82,90 @@ function SecretRow(p: { label: string; value: string; secret?: boolean | undefin
 }
 
 const dayKey = (d: Date) => "d:" + d.toISOString().slice(0, 10);
+const WEEKS = 26;
 
 function HabitGrid({ fields }: { fields: Y.Map<string> }) {
   useY(fields);
   const today = new Date(); today.setUTCHours(12, 0, 0, 0);
-  const days = Array.from({ length: 84 }, (_, i) => { const d = new Date(today); d.setUTCDate(d.getUTCDate() - (83 - i)); return d; });
+  // Grid ends on this week's Sunday; columns are weeks starting Monday.
+  const end = new Date(today); end.setUTCDate(end.getUTCDate() + ((7 - end.getUTCDay()) % 7));
+  const days = Array.from({ length: WEEKS * 7 }, (_, i) => { const d = new Date(end); d.setUTCDate(d.getUTCDate() - (WEEKS * 7 - 1 - i)); return d; });
   const done = (d: Date) => fields.get(dayKey(d)) === "1";
-  const toggle = (d: Date) => { const k = dayKey(d); if (done(d)) fields.delete(k); else fields.set(k, "1"); };
+  const future = (d: Date) => d.getTime() > today.getTime();
+  const toggle = (d: Date) => { if (future(d)) return; const k = dayKey(d); if (done(d)) fields.delete(k); else fields.set(k, "1"); };
+
+  const past = days.filter((d) => !future(d));
   let streak = 0;
-  for (let i = days.length - 1; i >= 0; i--) { if (done(days[i]!)) streak++; else if (i === days.length - 1) continue; else break; }
-  const last30 = days.slice(-30).filter(done).length;
+  for (let i = past.length - 1; i >= 0; i--) { if (done(past[i]!)) streak++; else if (i === past.length - 1) continue; else break; }
+  let best = 0, run = 0;
+  for (const d of past) { run = done(d) ? run + 1 : 0; best = Math.max(best, run); }
+  const last30 = past.slice(-30).filter(done).length;
+  const total = Array.from(fields.keys()).filter((k) => k.startsWith("d:") && fields.get(k) === "1").length;
+  const week = past.slice(-7);
+  const weeks = Array.from({ length: WEEKS }, (_, w) => days.slice(w * 7, w * 7 + 7));
+  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString(undefined, { timeZone: "UTC", ...o });
+
   return (
-    <div className="mb-6 rounded-xl border p-4 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-6">
-          <div><div className="text-2xl font-semibold">{streak}</div><div className="text-xs text-muted-foreground">day streak</div></div>
-          <div><div className="text-2xl font-semibold">{Math.round((last30 / 30) * 100)}%</div><div className="text-xs text-muted-foreground">last 30 days</div></div>
-        </div>
-        <Button variant={done(today) ? "secondary" : "default"} onClick={() => toggle(today)}>
-          {done(today) ? "Done today ✓" : "Mark today done"}
-        </Button>
-      </div>
-      <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto">
-        {days.map((d) => (
-          <button key={d.toISOString()} onClick={() => toggle(d)} title={d.toISOString().slice(0, 10)}
-            aria-label={`${d.toISOString().slice(0, 10)} ${done(d) ? "done" : "not done"}`}
-            className={`h-4 w-4 rounded-sm transition-colors sm:h-5 sm:w-5 ${done(d) ? "bg-primary" : "bg-muted hover:bg-muted-foreground/30"}`} />
+    <div className="mb-8 space-y-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+        {[["Current streak", `${streak}`, streak === 1 ? "day" : "days"], ["Best streak", `${best}`, best === 1 ? "day" : "days"],
+          ["30-day rate", `${Math.round((last30 / 30) * 100)}`, "%"], ["Total check-ins", `${total}`, ""]].map(([l, v, u]) => (
+          <div key={l} className="bg-background p-4">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{l}</div>
+            <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">{v}<span className="ml-1 text-sm font-normal text-muted-foreground">{u}</span></div>
+          </div>
         ))}
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">Last 12 weeks — tap any day to toggle.</p>
+
+      <div className="rounded-xl border p-4 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium">This week</div>
+            <div className="text-xs text-muted-foreground">{week.filter(done).length} of 7 days completed</div>
+          </div>
+          <Button size="sm" variant={done(today) ? "outline" : "default"} onClick={() => toggle(today)}>
+            {done(today) ? "Completed today" : "Check in today"}
+          </Button>
+        </div>
+        <div className="grid grid-cols-7 gap-2">
+          {week.map((d) => (
+            <button key={d.toISOString()} onClick={() => toggle(d)} aria-pressed={done(d)}
+              className={`flex flex-col items-center gap-1 rounded-lg border py-2 text-xs transition-colors ${done(d) ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+              <span className="opacity-70">{fmt(d, { weekday: "short" })}</span>
+              <span className="font-mono text-sm font-semibold">{fmt(d, { day: "numeric" })}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-sm font-medium">Last 6 months</div>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Missed <span className="h-2.5 w-2.5 rounded-[3px] bg-muted" /> <span className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> Done
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <div className="inline-flex gap-[3px]">
+            <div className="mr-1 grid grid-rows-7 gap-[3px] pt-4 text-[10px] leading-[11px] text-muted-foreground">
+              {["Mon", "", "Wed", "", "Fri", "", ""].map((l, i) => <span key={i} className="h-[11px]">{l}</span>)}
+            </div>
+            {weeks.map((w, wi) => (
+              <div key={wi} className="flex flex-col gap-[3px]">
+                <span className="h-[13px] text-[10px] leading-none text-muted-foreground">
+                  {w[0]!.getUTCDate() <= 7 ? fmt(w[0]!, { month: "short" }) : ""}
+                </span>
+                {w.map((d) => (
+                  <button key={d.toISOString()} onClick={() => toggle(d)} disabled={future(d)}
+                    title={`${fmt(d, { dateStyle: "medium" })} — ${done(d) ? "done" : "not done"}`}
+                    aria-label={`${fmt(d, { dateStyle: "medium" })} ${done(d) ? "done" : "not done"}`}
+                    className={`h-[11px] w-[11px] rounded-[3px] transition-colors ${future(d) ? "bg-transparent" : done(d) ? "bg-primary" : "bg-muted hover:bg-muted-foreground/30"} ${dayKey(d) === dayKey(today) ? "ring-1 ring-foreground/40 ring-offset-1 ring-offset-background" : ""}`} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
